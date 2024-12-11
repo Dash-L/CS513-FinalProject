@@ -10,29 +10,29 @@ typedef struct {
 
 #define VEC(T)                                                                 \
   typedef struct {                                                             \
-    T *start;                                                                  \
+    T *data;                                                                  \
     size_t size;                                                               \
     size_t cap;                                                                \
   } T##_VEC;                                                                   \
   T##_VEC *T##_VEC_create() {                                                  \
     T##_VEC *vec = malloc(sizeof(*vec));                                       \
-    vec->cap = 8;                                                              \
-    vec->start = malloc(sizeof(T) * vec->cap);                                 \
+    vec->cap = 2;                                                              \
+    vec->data = malloc(sizeof(T) * vec->cap);                                 \
     vec->size = 0;                                                             \
     return vec;                                                                \
   }                                                                            \
   void T##_VEC_append(T##_VEC *vec, T elem) {                                  \
     if (vec->size >= vec->cap) {                                               \
       vec->cap *= 2;                                                           \
-      vec->start = realloc(vec->start, sizeof(T) * vec->cap);                  \
+      vec->data = realloc(vec->data, sizeof(T) * vec->cap);                  \
     }                                                                          \
-    vec->start[vec->size++] = elem;                                            \
+    vec->data[vec->size++] = elem;                                            \
   }                                                                            \
   void T##_VEC_remove(T##_VEC *vec, size_t idx) {                              \
-    memmove(vec->start + idx, vec->start + idx + 1, vec->size - idx - 1);      \
+    memmove(vec->data + idx, vec->data + idx + 1, vec->size - idx - 1);      \
     vec->size -= 1;                                                            \
   }                                                                            \
-  T T##_VEC_pop(T##_VEC *vec) { return vec->start[--vec->size]; }
+  T T##_VEC_pop(T##_VEC *vec) { return vec->data[--vec->size]; }
 
 struct NODE_INFO;
 
@@ -41,8 +41,8 @@ typedef struct EDGE {
   // I'm not sure if we really need both of these, since edges are stored in
   // `NODE_INFO`s, so we already know one end of the edge I'm keeping both for
   // now, but only using `b` as the "to" node.
-  struct NODE_INFO *a;
-  struct NODE_INFO *b;
+  size_t a_idx;
+  size_t b_idx;
   double c;
 } EDGE;
 
@@ -118,13 +118,11 @@ int main(int argc, char **argv) {
 
   int res;
   while ((res = scanf(" %c %c %63[^\n]", &node1, &node2, cost_input)) == 3) {
-    // printf("input = { node1 = %c, node2 = %c, cost = %s }\n", node1, node2,
-    // cost_input);
     ssize_t node1_idx = -1, node2_idx = -1;
     for (int i = 0; i < nodes->size; i++) {
-      if (nodes->start[i].name == node1)
+      if (nodes->data[i].name == node1)
         node1_idx = i;
-      if (nodes->start[i].name == node2)
+      if (nodes->data[i].name == node2)
         node2_idx = i;
     }
 
@@ -132,19 +130,19 @@ int main(int argc, char **argv) {
       if (node1_idx == -1 || node2_idx == -1)
         continue;
 
-      EDGE_VEC *edges = nodes->start[node1_idx].edges;
+      EDGE_VEC *edges = nodes->data[node1_idx].edges;
       for (int i = 0; i < edges->size; i++) {
-        NODE_INFO *to_node = edges->start[i].b;
-        if (to_node->name == node2) {
+        size_t to_node = edges->data[i].b_idx;
+        if (to_node == node2_idx) {
           EDGE_VEC_remove(edges, i);
           break;
         }
       }
 
-      edges = nodes->start[node2_idx].edges;
+      edges = nodes->data[node2_idx].edges;
       for (int i = 0; i < edges->size; i++) {
-        NODE_INFO *to_node = edges->start[i].b;
-        if (to_node->name == node1) {
+        size_t to_node = edges->data[i].b_idx;
+        if (to_node == node1_idx) {
           EDGE_VEC_remove(edges, i);
           break;
         }
@@ -173,12 +171,12 @@ int main(int argc, char **argv) {
     }
 
     int node1_edge_found = 0, node2_edge_found = 0;
-    EDGE_VEC *node1_edges = nodes->start[node1_idx].edges;
-    EDGE_VEC *node2_edges = nodes->start[node2_idx].edges;
+    EDGE_VEC *node1_edges = nodes->data[node1_idx].edges;
+    EDGE_VEC *node2_edges = nodes->data[node2_idx].edges;
 
     for (int i = 0; i < node1_edges->size; i++) {
-      EDGE *edge = &node1_edges->start[i];
-      if (edge->b->name == node2) {
+      EDGE *edge = &node1_edges->data[i];
+      if (edge->b_idx == node2_idx) {
         node1_edge_found = 1;
         edge->c = cost;
         break;
@@ -186,8 +184,8 @@ int main(int argc, char **argv) {
     }
 
     for (int i = 0; i < node2_edges->size; i++) {
-      EDGE *edge = &node2_edges->start[i];
-      if (edge->b->name == node1) {
+      EDGE *edge = &node2_edges->data[i];
+      if (edge->b_idx == node1_idx) {
         node2_edge_found = 1;
         edge->c = cost;
         break;
@@ -196,40 +194,28 @@ int main(int argc, char **argv) {
 
     if (!node1_edge_found) {
       EDGE new_edge = {
-          .a = &nodes->start[node1_idx],
-          .b = &nodes->start[node2_idx],
+          .a_idx = node1_idx,
+          .b_idx = node2_idx,
           .c = cost,
       };
       EDGE_VEC_append(node1_edges, new_edge);
-      // printf("New edge to %c from %c with cost %f\n", node2, node1, cost);
     }
     if (!node2_edge_found) {
       EDGE new_edge = {
-          .a = &nodes->start[node2_idx],
-          .b = &nodes->start[node1_idx],
+          .a_idx = node2_idx,
+          .b_idx = node1_idx,
           .c = cost,
       };
       EDGE_VEC_append(node2_edges, new_edge);
-      // printf("New edge to %c from %c with cost %f\n", node1, node2, cost);
     }
-    printf("Nodes: %zu\n", nodes->size);
-    for (int i = 0; i < nodes->size; i++) {
-      printf("%c\n", nodes->start[i].name);
-      for (int j = 0; j < nodes->start[i].edges->size; j++) {
-        printf("  -> %c %.0f\n", nodes->start[i].edges->start[j].b->name,
-               nodes->start[i].edges->start[j].c);
-      }
-      printf("\n");
-    }
-    printf("\n\n");
   }
 
   printf("Nodes: %zu\n", nodes->size);
   for (int i = 0; i < nodes->size; i++) {
-    printf("%c\n", nodes->start[i].name);
-    for (int j = 0; j < nodes->start[i].edges->size; j++) {
-      printf("  -> %c %.0f\n", nodes->start[i].edges->start[j].b->name,
-             nodes->start[i].edges->start[j].c);
+    printf("%c\n", nodes->data[i].name);
+    for (int j = 0; j < nodes->data[i].edges->size; j++) {
+      printf("  -> %c %.0f\n", nodes->data[nodes->data[i].edges->data[j].b_idx].name,
+             nodes->data[i].edges->data[j].c);
     }
     printf("\n");
   }
