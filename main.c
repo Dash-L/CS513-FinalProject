@@ -5,12 +5,18 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "routers.h"
+
 void process_cmds(FILE *, NODE_INFO_VEC *);
+
+ROUTER_MANAGER *routers;
 
 // Controller thread:
 // Responsible for reading input n stuff
 int main(int argc, char **argv) {
   NODE_INFO_VEC *nodes = NODE_INFO_VEC_create();
+
+  routers = ROUTER_MANAGER_create();
 
   int arg = 1;
   FILE *pre_input_fd = NULL;
@@ -115,7 +121,9 @@ void process_cmds(FILE *fp, NODE_INFO_VEC *nodes) {
         }
       }
     } else if (strcmp(input_cmds[0], "dv") == 0) {
-
+      for (int i = 0; i < MAX_NODES; i++) {
+        ROUTER_MANAGER_print_distance_vec(routers, i);
+      }
     } else {
       if (num_cmds != 3) {
         fprintf(stderr,
@@ -136,6 +144,9 @@ void process_cmds(FILE *fp, NODE_INFO_VEC *nodes) {
       if (strcmp(input_cmds[2], "-") == 0) {
         if (node1_idx == -1 || node2_idx == -1)
           continue;
+
+          
+        ROUTER_MANAGER_remove_edge(routers, node1, node2);
 
         EDGE_VEC *edges = nodes->data[node1_idx].edges;
         for (int i = 0; i < edges->size; i++) {
@@ -187,6 +198,7 @@ void process_cmds(FILE *fp, NODE_INFO_VEC *nodes) {
       int node1_edge_found = 0, node2_edge_found = 0;
       EDGE_VEC *node1_edges = nodes->data[node1_idx].edges;
       EDGE_VEC *node2_edges = nodes->data[node2_idx].edges;
+      ROUTER_MANAGER_add_edge(routers, node1, node2, cost);
 
       for (int i = 0; i < node1_edges->size; i++) {
         EDGE *edge = &node1_edges->data[i];

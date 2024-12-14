@@ -97,6 +97,7 @@ bool updateMyDistanceVector(ROUTER_INFO *self, double *myVec, int *edgeIndOuts) 
 }
 
 void printYourDistanceVector(ROUTER_INFO *self, double *myVec, int *edgeIndOuts) {
+    printf("Node %c speaking!\n", self->name);
     for (int i = 0; i < MAX_NODES; i++) {
         if (!isfinite(myVec[i])) continue;
 
