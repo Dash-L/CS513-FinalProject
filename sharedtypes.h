@@ -22,20 +22,4 @@ typedef struct NODE_INFO {
   EDGE_VEC *edges;
 } NODE_INFO;
 
-VEC(NODE_INFO);
-
-struct ROUTER_INFO;
-
-typedef struct ROUTER_MESSAGE {
-  
-} ROUTER_MESSAGE;
-
-typedef struct ROUTER_EDGE {
-    EDGE edge;
-
-} ROUTER_EDGE;
-
-// For describing the thread
-typedef struct {
-    TEDGE_VEC
-} ROUTER_INFO;
+VEC(NODE_INFO)
