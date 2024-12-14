@@ -5,32 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-
-// For describing the thread
-typedef struct {
-
-} ROUTER_INFO;
-
-struct NODE_INFO;
-
-// For representing the graph in the controller thread
-typedef struct EDGE {
-  // I'm not sure if we really need both of these, since edges are stored in
-  // `NODE_INFO`s, so we already know one end of the edge I'm keeping both for
-  // now, but only using `b` as the "to" node.
-  size_t a_idx;
-  size_t b_idx;
-  double c;
-} EDGE;
-
-VEC(EDGE);
-
-typedef struct NODE_INFO {
-  char name;
-  EDGE_VEC *edges;
-} NODE_INFO;
-
-VEC(NODE_INFO);
+#include "sharedtypes.h"
 
 // Router thread:
 // Responsible for acting as a router

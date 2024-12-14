@@ -1,0 +1,1 @@
+/usr/bin/cc CMakeFiles/Routing.dir/main.c.o CMakeFiles/Routing.dir/routers.c.o -o Routing 
