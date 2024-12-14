@@ -168,3 +168,44 @@ void *router(void *arg) {
         printf("Haha hello from %c\n", myRouter->name);
     }
 }
+
+ROUTER_INFO *getOrCreateRouter(ROUTER_MANAGER *manager, char name) {
+    if (manager->allRouters[name]) {
+        return manager->allRouters[name];
+    }
+    manager->allRouters[name] = ROUTER_INFO_create(name);
+    pthread_t myThread;
+    pthread_attr_t attrs;
+    pthread_attr_init(&attrs);
+    pthread_create(&myThread, &attrs, router, manager->allRouters[name]);
+}
+
+void ROUTER_MANAGER_add_edge(ROUTER_MANAGER *manager, char a, char b, double weight) {
+    ROUTER_INFO *first = getOrCreateRouter(manager, a);
+    ROUTER_INFO *second = getOrCreateRouter(manager, b);
+    ROUTER_MESSAGE toSend;
+    toSend.msgType = ROUTER_MESSAGE_EDGE_ADD;
+    toSend.contents.edgeAdditionMessage.other = second;
+    toSend.contents.edgeAdditionMessage.weight = weight;
+    toSend.contents.edgeAdditionMessage.repRequired = ROUTER_EDGE_ADD_REPLY_IN_KIND;
+    ROUTER_MESSAGE_QUEUE_PUSH(first->incomingMessageQueue, toSend);
+}
+
+void ROUTER_MANAGER_remove_edge(ROUTER_MANAGER *manager, char a, char b) {
+    ROUTER_INFO *first = getOrCreateRouter(manager, a);
+    ROUTER_INFO *second = getOrCreateRouter(manager, b);
+    ROUTER_MESSAGE toSend;
+    toSend.msgType = ROUTER_MESSAGE_EDGE_ADD;
+    toSend.contents.edgeAdditionMessage.other = second;
+    toSend.contents.edgeAdditionMessage.weight = INFINITY;
+    toSend.contents.edgeAdditionMessage.repRequired = ROUTER_EDGE_ADD_REPLY_IN_KIND;
+    ROUTER_MESSAGE_QUEUE_PUSH(first->incomingMessageQueue, toSend);
+}
+
+ROUTER_MANAGER *ROUTER_MANAGER_create() {
+    ROUTER_MANAGER *ptr = malloc(sizeof(ROUTER_MANAGER));
+    for (int i = 0; i < MAX_NODES; i++) {
+        ptr->allRouters[i] = NULL;
+    }
+    return ptr;
+}

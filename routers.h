@@ -69,3 +69,11 @@ typedef struct ROUTER_INFO {
 ROUTER_INFO *ROUTER_INFO_create(char n);
 
 void *router(void *arg);
+
+typedef struct ROUTER_MANAGER {
+  ROUTER_INFO *allRouters[MAX_NODES];
+} ROUTER_MANAGER;
+
+void ROUTER_MANAGER_add_edge(ROUTER_MANAGER *manager, char a, char b, double weight);
+void ROUTER_MANAGER_remove_edge(ROUTER_MANAGER *manager, char a, char b);
+ROUTER_MANAGER *ROUTER_MANAGER_create();
