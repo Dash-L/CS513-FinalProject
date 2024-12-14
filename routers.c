@@ -202,6 +202,15 @@ void ROUTER_MANAGER_remove_edge(ROUTER_MANAGER *manager, char a, char b) {
     ROUTER_MESSAGE_QUEUE_PUSH(first->incomingMessageQueue, toSend);
 }
 
+void ROUTER_MANAGER_print_distance_vec(ROUTER_MANAGER *manager, char name) {
+    ROUTER_INFO *route = manager->allRouters[name];
+    if (!route) return;
+
+    ROUTER_MESSAGE toSend;
+    toSend.msgType = ROUTER_MESSAGE_PACKET;
+    ROUTER_MESSAGE_QUEUE_push(route->incomingMessageQueue, toSend);
+}
+
 ROUTER_MANAGER *ROUTER_MANAGER_create() {
     ROUTER_MANAGER *ptr = malloc(sizeof(ROUTER_MANAGER));
     for (int i = 0; i < MAX_NODES; i++) {
