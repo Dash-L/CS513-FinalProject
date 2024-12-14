@@ -37,8 +37,10 @@
     if (queue->vec->size == 0)                                                 \
       return -1;                                                               \
     pthread_mutex_lock(&queue->mutex);                                         \
-    if (queue->vec->size == 0)                                                 \
+    if (queue->vec->size == 0) {                                               \
+      pthread_mutex_unlock(&queue->mutex);                                     \
       return -1;                                                               \
+    }                                                                          \
     *out = T##_VEC_pop(queue->vec);                                            \
     pthread_mutex_unlock(&queue->mutex);                                       \
     return 0;                                                                  \

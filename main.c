@@ -20,18 +20,40 @@ void process_cmds(FILE *);
 
 NODE_INFO_VEC *nodes;
 
-
 // Controller thread:
 // Responsible for reading input n stuff
 int main(int argc, char **argv) {
   nodes = NODE_INFO_VEC_create();
 
   int arg = 1;
-  // while (arg < argc) {
-    
-  // }
+  FILE *pre_input_fd = NULL;
+  FILE *post_input_fd = NULL;
+  int do_stdin = 1;
+  while (arg < argc) {
+    if (strcmp(argv[arg], "--pre-input") == 0) {
+      pre_input_fd = fopen(argv[++arg], "r");
+    } else if (strcmp(argv[arg], "--post-input") == 0) {
+      post_input_fd = fopen(argv[++arg], "r");
+    } else if (strcmp(argv[arg], "--no-stdin") == 0) {
+      do_stdin = 0;
+    } else {
+      fprintf(stderr, "Invalid argument: %s\n", argv[arg]);
+    }
 
-  process_cmds(stdin);
+    arg++;
+  }
+
+  if (pre_input_fd != NULL) {
+    process_cmds(pre_input_fd);
+  }
+
+  if (do_stdin) {
+    process_cmds(stdin);
+  }
+
+  if (post_input_fd != NULL) {
+    process_cmds(post_input_fd);
+  }
 
   printf("Nodes: %zu\n", nodes->size);
   for (int i = 0; i < nodes->size; i++) {
@@ -127,7 +149,7 @@ void process_cmds(FILE *fp) {
       if (*left != '\0' || errno != 0 || left == input_cmds[2]) {
         fprintf(stderr, "Invalid cost: %s\n", input_cmds[2]);
         continue;
-      } 
+      }
 
       if (node1_idx == -1) {
         NODE_INFO new_node = {
