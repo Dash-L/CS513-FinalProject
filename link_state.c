@@ -27,7 +27,8 @@ typedef struct {
 // Code vaguely from
 // https://www.geeksforgeeks.org/c-program-to-implement-min-heap/#
 void MIN_HEAP_heapify(MIN_HEAP *heap, size_t idx) {
-  // printf("(%ld) %0.f, %ld, %ld\n", idx, heap->arr[0].dist, heap->arr[0].idx, heap->arr[0].thru);
+  // printf("(%ld) %0.f, %ld, %ld\n", idx, heap->arr[0].dist, heap->arr[0].idx,
+  // heap->arr[0].thru);
   ssize_t left = idx * 2 + 1;
   ssize_t right = idx * 2 + 2;
   ssize_t min = idx;
@@ -55,7 +56,8 @@ int MIN_HEAP_extract_min(MIN_HEAP *heap, DIST_INFO *out) {
   if (heap->size == 0)
     return -1;
 
-  // printf("%0.f, %ld, %ld\n", heap->arr[0].dist, heap->arr[0].idx, heap->arr[0].thru);
+  // printf("%0.f, %ld, %ld\n", heap->arr[0].dist, heap->arr[0].idx,
+  // heap->arr[0].thru);
 
   *out = heap->arr[0];
 
@@ -90,10 +92,10 @@ void link_state_update_router(NODE_INFO_VEC *nodes, size_t node_idx) {
     dists[i].thru = -1;
   }
   dists[node_idx].dist = 0;
-  dists[node_idx].idx = node_idx;
-  dists[node_idx].thru = -1;
   MIN_HEAP heap = {.arr = dists, .size = nodes->size};
-  MIN_HEAP_heapify(&heap, 0);
+  for (int i = heap.size / 2 - 1; i >= 0; i--) {
+    MIN_HEAP_heapify(&heap, i);
+  }
 
   NODE_INFO *node = &nodes->data[node_idx];
 
@@ -101,8 +103,10 @@ void link_state_update_router(NODE_INFO_VEC *nodes, size_t node_idx) {
 
   DIST_INFO min;
   int res;
-  while ((res = MIN_HEAP_extract_min(&heap, &min)) != -1 && min.dist != INFINITY) {
-    EDGE_VEC_append(node->routing_table, (EDGE){ .a_idx = min.idx, .b_idx = min.thru, .c = min.dist});
+  while ((res = MIN_HEAP_extract_min(&heap, &min)) != -1 &&
+         isfinite(min.dist)) {
+    EDGE_VEC_append(node->routing_table,
+                    (EDGE){.a_idx = min.idx, .b_idx = min.thru, .c = min.dist});
     EDGE_VEC *edges = nodes->data[min.idx].edges;
     for (int i = 0; i < edges->size; i++) {
       ssize_t node_heap_idx = -1;
@@ -118,7 +122,8 @@ void link_state_update_router(NODE_INFO_VEC *nodes, size_t node_idx) {
 
       if (heap.arr[node_heap_idx].dist > min.dist + edges->data[i].c) {
         heap.arr[node_heap_idx].thru = min.idx;
-        MIN_HEAP_decrease_key(&heap, node_heap_idx, min.dist + edges->data[i].c);
+        MIN_HEAP_decrease_key(&heap, node_heap_idx,
+                              min.dist + edges->data[i].c);
       }
     }
   }
@@ -159,7 +164,7 @@ void link_state_update_all_routers(NODE_INFO_VEC *nodes) {
   for (int i = 0; i < nodes->size; i++) {
     nodes->data[i].routing_table->size = 0;
     for (int j = 0; j < nodes->size; j++) {
-      if (dists[i][j].dist == INFINITY)
+      if (isinf(dists[i][j].dist))
         continue;
 
       EDGE_VEC_append(
