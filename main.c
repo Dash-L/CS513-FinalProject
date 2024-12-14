@@ -1,68 +1,9 @@
-#include "math.h"
-#include "queue.h"
 #include "sharedtypes.h"
-#include "vec.h"
 #include <errno.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-VEC_IMPL(EDGE);
-
-VEC_IMPL(NODE_INFO);
-
-// Runs Dijkstra's from this node
-void link_state_update_router(NODE_INFO *node) {}
-
-typedef struct DIST_INFO {
-  double dist;
-  ssize_t thru;
-} DIST_INFO;
-
-// Runs Floyd-Warshall on the graph
-void link_state_update_all_routers(NODE_INFO_VEC *nodes) {
-  DIST_INFO **dists = malloc(nodes->size * sizeof(*dists));
-  for (int i = 0; i < nodes->size; i++) {
-    dists[i] = malloc(nodes->size * sizeof(*dists[i]));
-    for (int j = 0; j < nodes->size; j++) {
-      dists[i][j] = (DIST_INFO){ .dist = INFINITY, .thru = -1 };
-    }
-  }
-
-  for (int i = 0; i < nodes->size; i++) {
-    dists[i][i].dist = 0;
-    EDGE_VEC *edges = nodes->data[i].edges;
-    for (int j = 0; j < edges->size; j++) {
-      dists[i][edges->data[j].b_idx].dist = edges->data[j].c;
-    }
-  }
-
-  for (int k = 0; k < nodes->size; k++) {
-    for (int i = 0; i < nodes->size; i++) {
-      for (int j = 0; j < nodes->size; j++) {
-        if (dists[i][j].dist > dists[i][k].dist + dists[k][j].dist) {
-          dists[i][j].dist = dists[i][k].dist + dists[k][j].dist;
-          dists[i][j].thru = k;
-        }
-      }
-    }
-  }
-
-  for (int i = 0; i < nodes->size; i++) {
-    for (int j = 0; j < nodes->size; j++) {
-      
-    }
-  }
-}
-
-// Router thread:
-// Responsible for acting as a router
-// Will be threadsafe queues for:
-//  - Receiving messages from controller thread
-//  - Sending messages to neighbors
-//  - Receiving messages from neighbors
-//
 
 void process_cmds(FILE *, NODE_INFO_VEC *);
 
@@ -78,8 +19,16 @@ int main(int argc, char **argv) {
   while (arg < argc) {
     if (strcmp(argv[arg], "--pre-input") == 0) {
       pre_input_fd = fopen(argv[++arg], "r");
+      if (pre_input_fd == NULL) {
+        perror("Could not open pre input file");
+        exit(1);
+      }
     } else if (strcmp(argv[arg], "--post-input") == 0) {
       post_input_fd = fopen(argv[++arg], "r");
+      if (post_input_fd == NULL) {
+        perror("Could not open post input file");
+        exit(1);
+      }
     } else if (strcmp(argv[arg], "--no-stdin") == 0) {
       do_stdin = 0;
     } else {
@@ -91,6 +40,7 @@ int main(int argc, char **argv) {
 
   if (pre_input_fd != NULL) {
     process_cmds(pre_input_fd, nodes);
+    fclose(pre_input_fd);
   }
 
   if (do_stdin) {
@@ -99,6 +49,7 @@ int main(int argc, char **argv) {
 
   if (post_input_fd != NULL) {
     process_cmds(post_input_fd, nodes);
+    fclose(post_input_fd);
   }
 
   printf("Nodes: %zu\n", nodes->size);
@@ -135,6 +86,10 @@ void process_cmds(FILE *fp, NODE_INFO_VEC *nodes) {
     if (strcmp(input_cmds[0], "ls") == 0) {
       if (num_cmds == 1) {
         link_state_update_all_routers(nodes);
+        for (int i = 0; i < nodes->size; i++) {
+          NODE_INFO_print_routing_table(&nodes->data[i], nodes);
+          printf("\n");
+        }
       } else if (num_cmds == 2) {
         ssize_t node_idx = -1;
         for (int i = 0; i < nodes->size; i++) {
@@ -147,7 +102,7 @@ void process_cmds(FILE *fp, NODE_INFO_VEC *nodes) {
           fprintf(stderr, "Node not found: %c\n", input_cmds[1][0]);
           continue;
         }
-        link_state_update_router(&nodes->data[node_idx]);
+        link_state_update_router(nodes, node_idx);
       }
     } else if (strcmp(input_cmds[0], "debug") == 0) {
       printf("Nodes: %zu\n", nodes->size);
