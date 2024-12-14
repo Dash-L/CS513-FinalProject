@@ -128,11 +128,19 @@ void process_cmds(FILE *fp, NODE_INFO_VEC *nodes) {
         }
       }
     } else if (strcmp(input_cmds[0], "dv") == 0) {
+      if (num_cmds > 1) {
+        ROUTER_MANAGER_print_distance_vec(routers, input_cmds[1][0]);
+      }
+      else {
       for (int i = 0; i < MAX_NODES; i++) {
         ROUTER_MANAGER_print_distance_vec(routers, i);
       }
-      printf("Done with that\n");
-    } else {
+      }
+    }
+    else if (num_cmds > 1 && input_cmds[1][0] == '>') {
+      ROUTER_MANAGER_route_packet(routers, input_cmds[0][0], input_cmds[1][0], input_cmds[2][0]);
+    }
+     else {
       if (num_cmds != 3) {
         fprintf(stderr,
                 "Expected 3 arguments (<node A> <node B> <cost>); got %d\n",

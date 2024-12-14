@@ -109,6 +109,29 @@ void printYourDistanceVector(ROUTER_INFO *self, double *myVec, int *edgeIndOuts)
     pthread_mutex_unlock(&printMutex);
 }
 
+void packetFwd(ROUTER_INFO *self, unsigned char message, unsigned char dest, double *distVec, int *edgeOutInds) {
+    pthread_mutex_lock(&printMutex);
+
+    printf("Packet received at %c!\n", self->name);
+    if (self->name == dest) {
+        printf("Packet arrived at desination. Message: %c Yay!\n", message);
+    }
+    else {
+        if (edgeOutInds[dest] >= 0) {
+            printf("Forwarding packet through %c\n", edgeOutInds[dest]);
+            ROUTER_MESSAGE toSend;
+            toSend.msgType = ROUTER_MESSAGE_PACKET;
+            toSend.contents.packetMessage.destination = dest;
+            toSend.contents.packetMessage.message = message;
+            ROUTER_MESSAGE_QUEUE_push(self->edges->data[edgeOutInds[dest]].end->incomingMessageQueue, toSend);
+        }
+        else {
+            printf("Impossible to forward. Packet dies here.\n");
+        }
+    }
+    pthread_mutex_unlock(&printMutex);
+}
+
 void *router(void *arg) {
     ROUTER_INFO *myRouter = arg;
 
@@ -157,9 +180,12 @@ void *router(void *arg) {
                 //}
                 break;
             }
-            case ROUTER_MESSAGE_PACKET: {
-                printf("PACKET SEEN\n");
+            case ROUTER_MESSAGE_DEBUG: {
                 printYourDistanceVector(myRouter, myDistanceVector, outgoingEdgeInds);
+                break;
+            }
+            case ROUTER_MESSAGE_PACKET: {
+                packetFwd(myRouter, content.packetMessage.message, content.packetMessage.destination, myDistanceVector, outgoingEdgeInds);
                 break;
             }
             case ROUTER_MESSAGE_WEIGHTS_UPDATE: {
@@ -219,7 +245,7 @@ void ROUTER_MANAGER_print_distance_vec(ROUTER_MANAGER *manager, unsigned char na
     if (!route) return;
 
     ROUTER_MESSAGE toSend;
-    toSend.msgType = ROUTER_MESSAGE_PACKET;
+    toSend.msgType = ROUTER_MESSAGE_DEBUG;
     ROUTER_MESSAGE_QUEUE_push(route->incomingMessageQueue, toSend);
 }
 
@@ -229,4 +255,13 @@ ROUTER_MANAGER *ROUTER_MANAGER_create() {
         ptr->allRouters[i] = NULL;
     }
     return ptr;
+}
+
+void ROUTER_MANAGER_route_packet(ROUTER_MANAGER *manager, unsigned char a, unsigned char b, unsigned char message) {
+    ROUTER_INFO *rtr = getOrCreateRouter(manager, a);
+    ROUTER_MESSAGE toSend;
+    toSend.msgType = ROUTER_MESSAGE_PACKET;
+    toSend.contents.packetMessage.destination = b;
+    toSend.contents.packetMessage.message = message;
+    ROUTER_MESSAGE_QUEUE_push(rtr->incomingMessageQueue, toSend);
 }
