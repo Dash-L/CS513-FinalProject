@@ -1,4 +1,5 @@
 #pragma once
+#include "vec.h"
 
 // Threadsafe queue
 #define QUEUE(T)                                                               \
@@ -9,7 +10,7 @@
   } T##_QUEUE;                                                                 \
                                                                                \
   T##_QUEUE *T##_QUEUE_create() {                                              \
-    T##_QUEUE *queue = malloc(sizeof(*queue));                                 \
+    T##_QUEUE *queue = (T##_QUEUE *)malloc(sizeof(*queue));                    \
     T##_VEC *vec = T##_VEC_create();                                           \
     queue->vec = vec;                                                          \
     pthread_mutex_init(&queue->mutex, NULL);                                   \
