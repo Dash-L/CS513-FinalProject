@@ -65,16 +65,6 @@ int main(int argc, char **argv) {
     fclose(post_input_fd);
   }
 
-  printf("Nodes: %zu\n", nodes->size);
-  for (int i = 0; i < nodes->size; i++) {
-    printf("%c\n", nodes->data[i].name);
-    for (int j = 0; j < nodes->data[i].edges->size; j++) {
-      printf("  -> %c %.0f\n",
-             nodes->data[nodes->data[i].edges->data[j].b_idx].name,
-             nodes->data[i].edges->data[j].c);
-    }
-  }
-
   return 0;
 }
 
@@ -116,6 +106,7 @@ void process_cmds(FILE *fp, NODE_INFO_VEC *nodes) {
           continue;
         }
         link_state_update_router(nodes, node_idx);
+        NODE_INFO_print_routing_table(&nodes->data[node_idx], nodes);
       }
     } else if (strcmp(input_cmds[0], "debug") == 0) {
       printf("Nodes: %zu\n", nodes->size);

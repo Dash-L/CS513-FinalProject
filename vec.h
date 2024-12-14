@@ -29,7 +29,8 @@
     vec->data[vec->size++] = elem;                                             \
   }                                                                            \
   void T##_VEC_remove(T##_VEC *vec, size_t idx) {                              \
-    memmove(vec->data + idx, vec->data + idx + 1, vec->size - idx - 1);        \
+    memmove(vec->data + idx, vec->data + idx + 1,                              \
+            (vec->size - idx - 1) * sizeof(T));                                \
     vec->size -= 1;                                                            \
   }                                                                            \
   T T##_VEC_pop(T##_VEC *vec) { return vec->data[--vec->size]; }
