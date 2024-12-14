@@ -7,9 +7,6 @@ struct NODE_INFO;
 
 // For representing the graph in the controller thread
 typedef struct EDGE {
-  // I'm not sure if we really need both of these, since edges are stored in
-  // `NODE_INFO`s, so we already know one end of the edge I'm keeping both for
-  // now, but only using `b` as the "to" node.
   size_t a_idx;
   size_t b_idx;
   double c;
@@ -20,6 +17,7 @@ VEC(EDGE);
 typedef struct NODE_INFO {
   char name;
   EDGE_VEC *edges;
+  EDGE_VEC *routing_table;
 } NODE_INFO;
 
 VEC(NODE_INFO)
