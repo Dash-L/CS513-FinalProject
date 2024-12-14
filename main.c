@@ -1,9 +1,10 @@
+#include "queue.h"
+#include "vec.h"
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "vec.h"
-#include "queue.h"
+#include <errno.h>
 
 // For describing the thread
 typedef struct {
@@ -40,16 +41,42 @@ VEC(NODE_INFO);
 //
 void *router(void *args) {}
 
+void process_cmds(FILE *);
+
+NODE_INFO_VEC *nodes;
+
+
 // Controller thread:
 // Responsible for reading input n stuff
 int main(int argc, char **argv) {
-  NODE_INFO_VEC *nodes = NODE_INFO_VEC_create();
+  nodes = NODE_INFO_VEC_create();
+
+  int arg = 1;
+  // while (arg < argc) {
+    
+  // }
+
+  process_cmds(stdin);
+
+  printf("Nodes: %zu\n", nodes->size);
+  for (int i = 0; i < nodes->size; i++) {
+    printf("%c\n", nodes->data[i].name);
+    for (int j = 0; j < nodes->data[i].edges->size; j++) {
+      printf("  -> %c %.0f\n",
+             nodes->data[nodes->data[i].edges->data[j].b_idx].name,
+             nodes->data[i].edges->data[j].c);
+    }
+    printf("\n");
+  }
+
+  return 0;
+}
+
+void process_cmds(FILE *fp) {
   char input[1024];
   char input_cmds[4][256];
 
-  int res;
-
-  while (fgets(input, sizeof(input), stdin) != NULL) {
+  while (fgets(input, sizeof(input), fp) != NULL) {
     int i = 0, num_cmds = 1, k = 0;
     while (input[i] != '\n') {
       if (input[i] == ' ') {
@@ -64,20 +91,25 @@ int main(int argc, char **argv) {
     input_cmds[num_cmds - 1][k] = '\0';
 
     if (strcmp(input_cmds[0], "ls") == 0) {
-      printf("Nodes: %zu\n", nodes->size);
-      for (int i = 0; i < nodes->size; i++) {
-        printf("%c\n", nodes->data[i].name);
-        for (int j = 0; j < nodes->data[i].edges->size; j++) {
-          printf("  -> %c %.0f\n", nodes->data[nodes->data[i].edges->data[j].b_idx].name,
-                 nodes->data[i].edges->data[j].c);
+      if (num_cmds == 1) {
+        printf("Nodes: %zu\n", nodes->size);
+        for (int i = 0; i < nodes->size; i++) {
+          printf("%c\n", nodes->data[i].name);
+          for (int j = 0; j < nodes->data[i].edges->size; j++) {
+            printf("  -> %c %.0f\n",
+                   nodes->data[nodes->data[i].edges->data[j].b_idx].name,
+                   nodes->data[i].edges->data[j].c);
+          }
+          printf("\n");
         }
-        printf("\n");
       }
     } else if (strcmp(input_cmds[0], "dv") == 0) {
-      
+
     } else {
       if (num_cmds != 3) {
-        fprintf(stderr, "Expected 3 arguments (<node A> <node B> <cost>); got %d\n", num_cmds - (i == 0));
+        fprintf(stderr,
+                "Expected 3 arguments (<node A> <node B> <cost>); got %d\n",
+                num_cmds - (i == 0));
         continue;
       }
       char node1 = input_cmds[0][0];
@@ -115,7 +147,12 @@ int main(int argc, char **argv) {
         continue;
       }
 
-      double cost = atof(input_cmds[2]);
+      char *left;
+      double cost = strtod(input_cmds[2], &left);
+      if (*left != '\0' || errno != 0 || left == input_cmds[2]) {
+        fprintf(stderr, "Invalid cost: %s\n", input_cmds[2]);
+        continue;
+      } 
 
       if (node1_idx == -1) {
         NODE_INFO new_node = {
@@ -174,16 +211,4 @@ int main(int argc, char **argv) {
       }
     }
   }
-
-  printf("Nodes: %zu\n", nodes->size);
-  for (int i = 0; i < nodes->size; i++) {
-    printf("%c\n", nodes->data[i].name);
-    for (int j = 0; j < nodes->data[i].edges->size; j++) {
-      printf("  -> %c %.0f\n", nodes->data[nodes->data[i].edges->data[j].b_idx].name,
-             nodes->data[i].edges->data[j].c);
-    }
-    printf("\n");
-  }
-
-  return 0;
 }
