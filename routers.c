@@ -46,10 +46,10 @@ void addOrUpdateEdge(ROUTER_INFO* self, ROUTER_INFO* other, double weight) {
     ROUTER_EDGE_RECORD_VEC_append(self->edges, myNewEdge);
 }
 
-void sendDistanceVectorToNeighbors(ROUTER_INFO *selfRouter, double *myDistVec, ROUTER_INFO *dontSend) {
+void sendDistanceVectorToNeighbors(ROUTER_INFO *selfRouter, double *myDistVec) {
     for (int i = 0; i < selfRouter->edges->size; i++) {
         ROUTER_EDGE_RECORD edge = selfRouter->edges->data[i];
-        if (!isfinite(edge.cost) || edge.end == NULL || (dontSend != NULL && edge.end == dontSend)) {
+        if (!isfinite(edge.cost) || edge.end == NULL) {
             continue;
         }
 
@@ -166,7 +166,7 @@ void *router(void *arg) {
 
                     if (!isfinite(content.edgeAdditionMessage.weight)) {
                         updateMyDistanceVector(myRouter, myDistanceVector, outgoingEdgeInds);
-                        sendDistanceVectorToNeighbors(myRouter, myDistanceVector, NULL);
+                        sendDistanceVectorToNeighbors(myRouter, myDistanceVector);
                     }
                 }
                 else if (content.edgeAdditionMessage.repRequired == ROUTER_EDGE_ADD_REPLY_SEND_DIST_VEC) {
@@ -177,7 +177,7 @@ void *router(void *arg) {
                     toSend.contents.edgeAdditionMessage.repRequired = ROUTER_EDGE_ADD_DO_NOT_REPLY;
                     ROUTER_MESSAGE_QUEUE_push(content.edgeAdditionMessage.other->incomingMessageQueue, toSend);*/
                     updateMyDistanceVector(myRouter, myDistanceVector, outgoingEdgeInds);
-                    sendDistanceVectorToNeighbors(myRouter, myDistanceVector, NULL);
+                    sendDistanceVectorToNeighbors(myRouter, myDistanceVector);
                 }
 
                 //else if (content.edgeAdditionMessage.repRequired == ROUTER_EDGE_ADD_DO_NOT_REPLY) {
@@ -203,7 +203,7 @@ void *router(void *arg) {
 
                 bool anyChanges = updateMyDistanceVector(myRouter, myDistanceVector, outgoingEdgeInds);
                 if (anyChanges) {
-                    sendDistanceVectorToNeighbors(myRouter, myDistanceVector, content.distanceVectorMessage.source);
+                    sendDistanceVectorToNeighbors(myRouter, myDistanceVector);
                 }
             }
         }
