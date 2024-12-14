@@ -63,7 +63,6 @@ void link_state_update_all_routers(NODE_INFO_VEC *nodes) {
 //  - Sending messages to neighbors
 //  - Receiving messages from neighbors
 //
-void *router(void *args) {}
 
 void process_cmds(FILE *, NODE_INFO_VEC *);
 

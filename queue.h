@@ -1,5 +1,6 @@
 #pragma once
 #include "vec.h"
+#include <pthread.h>
 
 // Threadsafe queue
 #define QUEUE(T)                                                               \
