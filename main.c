@@ -128,9 +128,9 @@ void process_cmds(FILE *fp, NODE_INFO_VEC *nodes) {
           ROUTER_MANAGER_print_distance_vec(routers, i);
         }
       }
-    } else if (num_cmds > 1 && input_cmds[1][0] == '>') {
-      ROUTER_MANAGER_route_packet(routers, input_cmds[0][0], input_cmds[1][0],
-                                  input_cmds[2][0]);
+    } else if (num_cmds == 4 && input_cmds[1][0] == '>') {
+      ROUTER_MANAGER_route_packet(routers, input_cmds[0][0], input_cmds[2][0],
+                                  input_cmds[3][0]);
     } else {
       if (num_cmds != 3) {
         fprintf(stderr,
