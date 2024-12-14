@@ -118,7 +118,7 @@ void packetFwd(ROUTER_INFO *self, char message, unsigned char dest, double *dist
     }
     else {
         if (edgeOutInds[dest] >= 0) {
-            printf("Forwarding packet through %c\n", edgeOutInds[dest]);
+            printf("Forwarding packet through %c\n", self->edges->data[edgeOutInds[dest]].end->name);
             ROUTER_MESSAGE toSend;
             toSend.msgType = ROUTER_MESSAGE_PACKET;
             toSend.contents.packetMessage.destination = dest;
