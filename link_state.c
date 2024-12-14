@@ -24,26 +24,109 @@ typedef struct {
   size_t size;
 } MIN_HEAP;
 
-void MIN_HEAP_heapify(MIN_HEAP *heap) {
-  
+// Code vaguely from
+// https://www.geeksforgeeks.org/c-program-to-implement-min-heap/#
+void MIN_HEAP_heapify(MIN_HEAP *heap, size_t idx) {
+  // printf("(%ld) %0.f, %ld, %ld\n", idx, heap->arr[0].dist, heap->arr[0].idx, heap->arr[0].thru);
+  ssize_t left = idx * 2 + 1;
+  ssize_t right = idx * 2 + 2;
+  ssize_t min = idx;
+
+  if (left >= heap->size || left < 0)
+    left = -1;
+  if (right >= heap->size || right < 0)
+    right = -1;
+
+  if (left != -1 && heap->arr[left].dist < heap->arr[idx].dist)
+    min = left;
+  if (right != -1 && heap->arr[right].dist < heap->arr[idx].dist)
+    min = right;
+
+  if (min != idx) {
+    DIST_INFO temp = heap->arr[min];
+    heap->arr[min] = heap->arr[idx];
+    heap->arr[idx] = temp;
+
+    MIN_HEAP_heapify(heap, min);
+  }
 }
 
-// Key is the index in the nodes array
-void MIN_HEAP_delete(MIN_HEAP *heap, size_t key) {
-  
+int MIN_HEAP_extract_min(MIN_HEAP *heap, DIST_INFO *out) {
+  if (heap->size == 0)
+    return -1;
+
+  // printf("%0.f, %ld, %ld\n", heap->arr[0].dist, heap->arr[0].idx, heap->arr[0].thru);
+
+  *out = heap->arr[0];
+
+  heap->arr[0] = heap->arr[--heap->size];
+
+  MIN_HEAP_heapify(heap, 0);
+
+  return 0;
+}
+
+// Code vaguely from https://www.baeldung.com/cs/min-heaps-decrease-key
+void MIN_HEAP_decrease_key(MIN_HEAP *heap, size_t idx, double new_dist) {
+  heap->arr[idx].dist = new_dist;
+  while (idx > 0) {
+    if (heap->arr[idx].dist < heap->arr[(idx - 1) / 2].dist) {
+      DIST_INFO temp = heap->arr[idx];
+      heap->arr[idx] = heap->arr[(idx - 1) / 2];
+      heap->arr[(idx - 1) / 2] = temp;
+      idx = (idx - 1) / 2;
+    } else {
+      break;
+    }
+  }
 }
 
 // Runs Dijkstra's from this node
 void link_state_update_router(NODE_INFO_VEC *nodes, size_t node_idx) {
   DIST_INFO *dists = malloc(nodes->size * sizeof(*dists));
-  for (int i = 0; i < nodes->size ; i++) {
+  for (int i = 0; i < nodes->size; i++) {
     dists[i].dist = INFINITY;
+    dists[i].idx = i;
+    dists[i].thru = -1;
   }
   dists[node_idx].dist = 0;
+  dists[node_idx].idx = node_idx;
+  dists[node_idx].thru = -1;
+  MIN_HEAP heap = {.arr = dists, .size = nodes->size};
+  MIN_HEAP_heapify(&heap, 0);
+
+  NODE_INFO *node = &nodes->data[node_idx];
+
+  node->routing_table->size = 0;
+
+  DIST_INFO min;
+  int res;
+  while ((res = MIN_HEAP_extract_min(&heap, &min)) != -1 && min.dist != INFINITY) {
+    EDGE_VEC_append(node->routing_table, (EDGE){ .a_idx = min.idx, .b_idx = min.thru, .c = min.dist});
+    EDGE_VEC *edges = nodes->data[min.idx].edges;
+    for (int i = 0; i < edges->size; i++) {
+      ssize_t node_heap_idx = -1;
+      for (int j = 0; j < heap.size; j++) {
+        if (heap.arr[j].idx == edges->data[i].b_idx) {
+          node_heap_idx = j;
+          break;
+        }
+      }
+      if (node_heap_idx == -1) {
+        continue;
+      }
+
+      if (heap.arr[node_heap_idx].dist > min.dist + edges->data[i].c) {
+        heap.arr[node_heap_idx].thru = min.idx;
+        MIN_HEAP_decrease_key(&heap, node_heap_idx, min.dist + edges->data[i].c);
+      }
+    }
+  }
 }
 
 // Runs Floyd-Warshall on the graph
-// Used pseudocode from https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm
+// Used pseudocode from
+// https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm
 void link_state_update_all_routers(NODE_INFO_VEC *nodes) {
   DIST_INFO **dists = malloc(nodes->size * sizeof(*dists));
   for (int i = 0; i < nodes->size; i++) {
@@ -83,8 +166,8 @@ void link_state_update_all_routers(NODE_INFO_VEC *nodes) {
           nodes->data[i].routing_table,
           (EDGE){.b_idx = dists[i][j].thru, .a_idx = j, .c = dists[i][j].dist});
     }
-    qsort(nodes->data[i].routing_table->data, nodes->data[i].routing_table->size,
-          sizeof(EDGE), compare_edges);
+    qsort(nodes->data[i].routing_table->data,
+          nodes->data[i].routing_table->size, sizeof(EDGE), compare_edges);
   }
 }
 
