@@ -8,6 +8,12 @@
     size_t size;                                                               \
     size_t cap;                                                                \
   } T##_VEC;                                                                   \
+  T##_VEC *T##_VEC_create();                                                   \
+  void T##_VEC_append(T##_VEC *vec, T elem);                                   \
+  void T##_VEC_remove(T##_VEC *vec, size_t idx);                               \
+  T T##_VEC_pop(T##_VEC *vec);
+
+#define VEC_IMPL(T)                                                            \
   T##_VEC *T##_VEC_create() {                                                  \
     T##_VEC *vec = (T##_VEC *)malloc(sizeof(*vec));                            \
     vec->cap = 8;                                                              \

@@ -36,6 +36,6 @@ typedef struct ROUTER_EDGE {
 } ROUTER_EDGE;
 
 // For describing the thread
-typedef struct {
-    TEDGE_VEC
+typedef struct ROUTER_INFO {
+    // TEDGE_VEC
 } ROUTER_INFO;

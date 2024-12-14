@@ -7,6 +7,10 @@
 #include <errno.h>
 #include "sharedtypes.h"
 
+VEC_IMPL(EDGE);
+
+VEC_IMPL(NODE_INFO);
+
 // Router thread:
 // Responsible for acting as a router
 // Will be threadsafe queues for:
