@@ -5,7 +5,7 @@
 #include "vec.h"
 #include "queue.h"
 
-#define MAX_NODES 128
+#define MAX_NODES 256
 
 extern pthread_mutex_t printMutex;
 
@@ -40,7 +40,7 @@ typedef union {
 
   struct {
     char message;
-    char destination;
+    unsigned char destination;
   } packetMessage;
 } ROUTER_MESSAGE_CONTENTS;
 
@@ -56,7 +56,7 @@ typedef struct ROUTER_EDGE_RECORD {
 } ROUTER_EDGE_RECORD;
 
 typedef struct {
-  char name;
+  unsigned char name;
   double cost;
 
 } ROUTER_DIST_ENTRY;
@@ -70,11 +70,11 @@ VEC(ROUTER_EDGE_RECORD);
 // For describing the thread
 typedef struct ROUTER_INFO {
   ROUTER_MESSAGE_QUEUE *incomingMessageQueue;
-  char name;
+  unsigned char name;
   ROUTER_EDGE_RECORD_VEC *edges;
 } ROUTER_INFO;
 
-ROUTER_INFO *ROUTER_INFO_create(char n);
+ROUTER_INFO *ROUTER_INFO_create(unsigned char n);
 
 void *router(void *arg);
 
@@ -82,8 +82,8 @@ typedef struct ROUTER_MANAGER {
   ROUTER_INFO *allRouters[MAX_NODES];
 } ROUTER_MANAGER;
 
-void ROUTER_MANAGER_add_edge(ROUTER_MANAGER *manager, char a, char b, double weight);
-void ROUTER_MANAGER_remove_edge(ROUTER_MANAGER *manager, char a, char b);
-void ROUTER_MANAGER_print_distance_vec(ROUTER_MANAGER *manager, char name);
-void ROUTER_MANAGER_route_packet(ROUTER_MANAGER *manager, char a, char b, char message);
+void ROUTER_MANAGER_add_edge(ROUTER_MANAGER *manager, unsigned char a, unsigned char b, double weight);
+void ROUTER_MANAGER_remove_edge(ROUTER_MANAGER *manager, unsigned char a, unsigned char b);
+void ROUTER_MANAGER_print_distance_vec(ROUTER_MANAGER *manager, unsigned char name);
+void ROUTER_MANAGER_route_packet(ROUTER_MANAGER *manager, unsigned char a, unsigned char b, char message);
 ROUTER_MANAGER *ROUTER_MANAGER_create();
