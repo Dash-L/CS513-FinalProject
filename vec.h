@@ -33,4 +33,8 @@
             (vec->size - idx - 1) * sizeof(T));                                \
     vec->size -= 1;                                                            \
   }                                                                            \
-  T T##_VEC_pop(T##_VEC *vec) { return vec->data[--vec->size]; }
+  T T##_VEC_pop(T##_VEC *vec) {                                                \
+    T out = vec->data[0];                                                      \
+    T##_VEC_remove(vec, 0);                                                    \
+    return out;                                                                \
+  }
