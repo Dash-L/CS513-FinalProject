@@ -189,7 +189,7 @@ void ROUTER_MANAGER_add_edge(ROUTER_MANAGER *manager, char a, char b, double wei
     toSend.contents.edgeAdditionMessage.other = second;
     toSend.contents.edgeAdditionMessage.weight = weight;
     toSend.contents.edgeAdditionMessage.repRequired = ROUTER_EDGE_ADD_REPLY_IN_KIND;
-    ROUTER_MESSAGE_QUEUE_PUSH(first->incomingMessageQueue, toSend);
+    ROUTER_MESSAGE_QUEUE_push(first->incomingMessageQueue, toSend);
 }
 
 void ROUTER_MANAGER_remove_edge(ROUTER_MANAGER *manager, char a, char b) {
@@ -200,7 +200,7 @@ void ROUTER_MANAGER_remove_edge(ROUTER_MANAGER *manager, char a, char b) {
     toSend.contents.edgeAdditionMessage.other = second;
     toSend.contents.edgeAdditionMessage.weight = INFINITY;
     toSend.contents.edgeAdditionMessage.repRequired = ROUTER_EDGE_ADD_REPLY_IN_KIND;
-    ROUTER_MESSAGE_QUEUE_PUSH(first->incomingMessageQueue, toSend);
+    ROUTER_MESSAGE_QUEUE_push(first->incomingMessageQueue, toSend);
 }
 
 void ROUTER_MANAGER_print_distance_vec(ROUTER_MANAGER *manager, char name) {

@@ -1,4 +1,5 @@
 #include "sharedtypes.h"
+#include "link_state.h"
 #include <errno.h>
 #include <pthread.h>
 #include <stdio.h>
