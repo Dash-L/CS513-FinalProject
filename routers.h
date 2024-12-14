@@ -1,10 +1,9 @@
 #pragma once
 #include <stdlib.h>
+#include <pthread.h>
 #include "vec.h"
 #include "queue.h"
 
-
-struct ROUTER_INFO;
 
 enum ROUTER_MESSAGE_TYPE {
   PACKET,
@@ -15,7 +14,7 @@ enum ROUTER_MESSAGE_TYPE {
 };
 
 typedef struct ROUTER_MESSAGE {
-  
+  enum ROUTER_MESSAGE_TYPE msgType;
 } ROUTER_MESSAGE;
 
 struct ROUTER_INFO;
@@ -26,11 +25,11 @@ typedef struct ROUTER_EDGE_RECORD {
   double cost;
 } ROUTER_EDGE_RECORD;
 
-VEC(ROUTER_MESSAGE)
+VEC(ROUTER_MESSAGE);
 
-QUEUE(ROUTER_MESSAGE)
+QUEUE(ROUTER_MESSAGE);
 
-VEC(ROUTER_EDGE_RECORD)
+VEC(ROUTER_EDGE_RECORD);
 
 // For describing the thread
 typedef struct ROUTER_INFO {

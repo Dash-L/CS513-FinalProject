@@ -10,9 +10,13 @@ ROUTER_INFO *ROUTER_INFO_create(char name) {
 
 void *router(void *arg) {
     ROUTER_INFO *myRouter = arg;
-
     while (1) {
+        ROUTER_MESSAGE incomingMsg;
+        ROUTER_MESSAGE_QUEUE_pop(myRouter->incomingMessageQueue, &incomingMsg);
 
+        switch(incomingMsg.msgType) {
+            case EDGE_ADD:
+        }
     }
 }
 
