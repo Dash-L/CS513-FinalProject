@@ -9,13 +9,13 @@
     pthread_cond_t nonempty;                                                   \
   } T##_QUEUE;                                                                 \
                                                                                \
-  T##_QUEUE *T##_QUEUE_create() {                                              \
-    void T##_QUEUE_push(T##_QUEUE *queue, T elem);                             \
-    /* Guaranteed to pop an element, might wait a while for one to be there */ \
-    void T##_QUEUE_pop(T##_QUEUE *queue, T *out);                              \
-    /* Returns -1 if there is nothing to pop. Still waits on mutex until it    \
-     * unlocks */                                                              \
-    int T##_QUEUE_trypop(T##_QUEUE *queue, T *out);
+  T##_QUEUE *T##_QUEUE_create();                                               \
+  void T##_QUEUE_push(T##_QUEUE *queue, T elem);                               \
+  /* Guaranteed to pop an element, might wait a while for one to be there */   \
+  void T##_QUEUE_pop(T##_QUEUE *queue, T *out);                                \
+  /* Returns -1 if there is nothing to pop. Still waits on mutex until it      \
+   * unlocks */                                                                \
+  int T##_QUEUE_trypop(T##_QUEUE *queue, T *out);
 
 #define QUEUE_IMPL(T)                                                          \
   T##_QUEUE *T##_QUEUE_create() {                                              \
