@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+pthread_mutex_t printMutex;
+
 #include "routers.h"
 
 void process_cmds(FILE *, NODE_INFO_VEC *);
@@ -16,6 +18,10 @@ ROUTER_MANAGER *routers;
 // Responsible for reading input n stuff
 int main(int argc, char **argv) {
   NODE_INFO_VEC *nodes = NODE_INFO_VEC_create();
+
+  pthread_mutexattr_t attrs;
+  pthread_mutexattr_init(&attrs);
+  pthread_mutex_init(&printMutex, &attrs);
 
   routers = ROUTER_MANAGER_create();
 
@@ -125,6 +131,7 @@ void process_cmds(FILE *fp, NODE_INFO_VEC *nodes) {
       for (int i = 0; i < MAX_NODES; i++) {
         ROUTER_MANAGER_print_distance_vec(routers, i);
       }
+      printf("Done with that\n");
     } else {
       if (num_cmds != 3) {
         fprintf(stderr,

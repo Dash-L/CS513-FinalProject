@@ -16,6 +16,7 @@ ROUTER_INFO *ROUTER_INFO_create(char name) {
     dat->edges = ROUTER_EDGE_RECORD_VEC_create();
     dat->name = name;
     dat->incomingMessageQueue = ROUTER_MESSAGE_QUEUE_create();
+    return dat;
 }
 
 ROUTER_EDGE_RECORD *getEdgeByPtr(ROUTER_INFO *self, ROUTER_INFO *other) {
@@ -97,12 +98,15 @@ bool updateMyDistanceVector(ROUTER_INFO *self, double *myVec, int *edgeIndOuts) 
 }
 
 void printYourDistanceVector(ROUTER_INFO *self, double *myVec, int *edgeIndOuts) {
+    pthread_mutex_lock(&printMutex);
     printf("Node %c speaking!\n", self->name);
     for (int i = 0; i < MAX_NODES; i++) {
         if (!isfinite(myVec[i])) continue;
 
-        printf("To %c: %ld via %c\n", i, myVec[i], edgeIndOuts[i] < 0 ? self->name : self->edges->data[edgeIndOuts[i]].end->name);
+        //printf("%i %f %i\n", i, myVec[i], edgeIndOuts[i]);
+        printf("To %c: %f via %c\n", i, myVec[i], edgeIndOuts[i] < 0 ? self->name : self->edges->data[edgeIndOuts[i]].end->name);
     }
+    pthread_mutex_unlock(&printMutex);
 }
 
 void *router(void *arg) {
@@ -140,6 +144,12 @@ void *router(void *arg) {
                     toSend.contents.edgeAdditionMessage.weight = content.edgeAdditionMessage.weight;
                     toSend.contents.edgeAdditionMessage.repRequired = ROUTER_EDGE_ADD_DO_NOT_REPLY;
                     ROUTER_MESSAGE_QUEUE_push(content.edgeAdditionMessage.other->incomingMessageQueue, toSend);*/
+                    updateMyDistanceVector(myRouter, myDistanceVector, outgoingEdgeInds);
+                    sendDistanceVectorToNeighbors(myRouter, myDistanceVector);
+                }
+
+                if (!isfinite(content.edgeAdditionMessage.weight)) {
+                    updateMyDistanceVector(myRouter, myDistanceVector, outgoingEdgeInds);
                     sendDistanceVectorToNeighbors(myRouter, myDistanceVector);
                 }
                 //else if (content.edgeAdditionMessage.repRequired == ROUTER_EDGE_ADD_DO_NOT_REPLY) {
@@ -166,7 +176,7 @@ void *router(void *arg) {
             }
         }
 
-        printf("Haha hello from %c\n", myRouter->name);
+        //printf("Haha hello from %c\n", myRouter->name);
     }
 }
 
@@ -179,6 +189,7 @@ ROUTER_INFO *getOrCreateRouter(ROUTER_MANAGER *manager, char name) {
     pthread_attr_t attrs;
     pthread_attr_init(&attrs);
     pthread_create(&myThread, &attrs, router, manager->allRouters[name]);
+    return manager->allRouters[name];
 }
 
 void ROUTER_MANAGER_add_edge(ROUTER_MANAGER *manager, char a, char b, double weight) {
@@ -203,7 +214,7 @@ void ROUTER_MANAGER_remove_edge(ROUTER_MANAGER *manager, char a, char b) {
     ROUTER_MESSAGE_QUEUE_push(first->incomingMessageQueue, toSend);
 }
 
-void ROUTER_MANAGER_print_distance_vec(ROUTER_MANAGER *manager, char name) {
+void ROUTER_MANAGER_print_distance_vec(ROUTER_MANAGER *manager, unsigned char name) {
     ROUTER_INFO *route = manager->allRouters[name];
     if (!route) return;
 

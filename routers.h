@@ -6,6 +6,7 @@
 
 #define MAX_NODES 256
 
+extern pthread_mutex_t printMutex;
 
 struct ROUTER_INFO;
 
@@ -76,5 +77,5 @@ typedef struct ROUTER_MANAGER {
 
 void ROUTER_MANAGER_add_edge(ROUTER_MANAGER *manager, char a, char b, double weight);
 void ROUTER_MANAGER_remove_edge(ROUTER_MANAGER *manager, char a, char b);
-void ROUTER_MANAGER_print_distance_vec(ROUTER_MANAGER *manager, char name);
+void ROUTER_MANAGER_print_distance_vec(ROUTER_MANAGER *manager, unsigned char name);
 ROUTER_MANAGER *ROUTER_MANAGER_create();
