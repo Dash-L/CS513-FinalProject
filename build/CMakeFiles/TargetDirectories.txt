@@ -1,3 +1,0 @@
-/home/peter/cs513/CS513-FinalProject/build/CMakeFiles/Routing.dir
-/home/peter/cs513/CS513-FinalProject/build/CMakeFiles/edit_cache.dir
-/home/peter/cs513/CS513-FinalProject/build/CMakeFiles/rebuild_cache.dir
