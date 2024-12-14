@@ -46,10 +46,10 @@ void addOrUpdateEdge(ROUTER_INFO* self, ROUTER_INFO* other, double weight) {
     ROUTER_EDGE_RECORD_VEC_append(self->edges, myNewEdge);
 }
 
-void sendDistanceVectorToNeighbors(ROUTER_INFO *selfRouter, double *myDistVec) {
+void sendDistanceVectorToNeighbors(ROUTER_INFO *selfRouter, double *myDistVec, ROUTER_INFO *dontSend) {
     for (int i = 0; i < selfRouter->edges->size; i++) {
         ROUTER_EDGE_RECORD edge = selfRouter->edges->data[i];
-        if (!isfinite(edge.cost) || edge.end == NULL) {
+        if (!isfinite(edge.cost) || edge.end == NULL || (dontSend != NULL && edge.end == dontSend)) {
             continue;
         }
 
@@ -78,7 +78,7 @@ bool updateMyDistanceVector(ROUTER_INFO *self, double *myVec, int *edgeIndOuts) 
             outgoingEdgeInd = -2;
         }
         for (int j = 0; j < self->edges->size; j++) {
-            if (self->edges->data[j].end == NULL || !isfinite(self->edges->data[j].cost)) {
+            if (self->edges->data[j].end == NULL || isinf(self->edges->data[j].cost)) {
                 continue;
             }
 
@@ -109,7 +109,7 @@ void printYourDistanceVector(ROUTER_INFO *self, double *myVec, int *edgeIndOuts)
     pthread_mutex_unlock(&printMutex);
 }
 
-void packetFwd(ROUTER_INFO *self, unsigned char message, unsigned char dest, double *distVec, int *edgeOutInds) {
+void packetFwd(ROUTER_INFO *self, char message, char dest, double *distVec, int *edgeOutInds) {
     pthread_mutex_lock(&printMutex);
 
     printf("Packet received at %c!\n", self->name);
@@ -150,11 +150,11 @@ void *router(void *arg) {
         enum ROUTER_MESSAGE_TYPE msgType = incomingMsg.msgType;
         ROUTER_MESSAGE_CONTENTS content = incomingMsg.contents;
 
-        printf("%c %d\n", myRouter->name, msgType);
+        // printf("%c %d\n", myRouter->name, msgType);
 
         switch (msgType) {
             case ROUTER_MESSAGE_EDGE_ADD: {
-                printf("other: %c\n", content.edgeAdditionMessage.other->name);
+                // printf("other: %c\n", content.edgeAdditionMessage.other->name);
                 addOrUpdateEdge(myRouter, content.edgeAdditionMessage.other, content.edgeAdditionMessage.weight);
                 if (content.edgeAdditionMessage.repRequired == ROUTER_EDGE_ADD_REPLY_IN_KIND) {
                     ROUTER_MESSAGE toSend;
@@ -163,6 +163,11 @@ void *router(void *arg) {
                     toSend.contents.edgeAdditionMessage.weight = content.edgeAdditionMessage.weight;
                     toSend.contents.edgeAdditionMessage.repRequired = ROUTER_EDGE_ADD_REPLY_SEND_DIST_VEC;
                     ROUTER_MESSAGE_QUEUE_push(content.edgeAdditionMessage.other->incomingMessageQueue, toSend);
+
+                    if (!isfinite(content.edgeAdditionMessage.weight)) {
+                        updateMyDistanceVector(myRouter, myDistanceVector, outgoingEdgeInds);
+                        sendDistanceVectorToNeighbors(myRouter, myDistanceVector, NULL);
+                    }
                 }
                 else if (content.edgeAdditionMessage.repRequired == ROUTER_EDGE_ADD_REPLY_SEND_DIST_VEC) {
                     /*ROUTER_MESSAGE toSend;
@@ -172,13 +177,9 @@ void *router(void *arg) {
                     toSend.contents.edgeAdditionMessage.repRequired = ROUTER_EDGE_ADD_DO_NOT_REPLY;
                     ROUTER_MESSAGE_QUEUE_push(content.edgeAdditionMessage.other->incomingMessageQueue, toSend);*/
                     updateMyDistanceVector(myRouter, myDistanceVector, outgoingEdgeInds);
-                    sendDistanceVectorToNeighbors(myRouter, myDistanceVector);
+                    sendDistanceVectorToNeighbors(myRouter, myDistanceVector, NULL);
                 }
 
-                if (!isfinite(content.edgeAdditionMessage.weight)) {
-                    updateMyDistanceVector(myRouter, myDistanceVector, outgoingEdgeInds);
-                    sendDistanceVectorToNeighbors(myRouter, myDistanceVector);
-                }
                 //else if (content.edgeAdditionMessage.repRequired == ROUTER_EDGE_ADD_DO_NOT_REPLY) {
                 //    sendDistanceVectorToNeighbors(myRouter, myDistanceVector);
                 //}
@@ -193,6 +194,7 @@ void *router(void *arg) {
                 break;
             }
             case ROUTER_MESSAGE_WEIGHTS_UPDATE: {
+                // printf("%c from: %c\n", myRouter->name, content.distanceVectorMessage.source->name);
                 ROUTER_EDGE_RECORD *myEdge = getEdgeByPtr(myRouter, content.distanceVectorMessage.source);
                 for (int i = 0; i < MAX_NODES; i++) {
                     myEdge->distanceVector[i] = content.distanceVectorMessage.distVec[i];
@@ -201,7 +203,7 @@ void *router(void *arg) {
 
                 bool anyChanges = updateMyDistanceVector(myRouter, myDistanceVector, outgoingEdgeInds);
                 if (anyChanges) {
-                    sendDistanceVectorToNeighbors(myRouter, myDistanceVector);
+                    sendDistanceVectorToNeighbors(myRouter, myDistanceVector, content.distanceVectorMessage.source);
                 }
             }
         }
@@ -230,7 +232,6 @@ void ROUTER_MANAGER_add_edge(ROUTER_MANAGER *manager, char a, char b, double wei
     toSend.contents.edgeAdditionMessage.other = second;
     toSend.contents.edgeAdditionMessage.weight = weight;
     toSend.contents.edgeAdditionMessage.repRequired = ROUTER_EDGE_ADD_REPLY_IN_KIND;
-    printf("manager send add edge to %c (other %c, weight %f)\n", a, b, weight);
     ROUTER_MESSAGE_QUEUE_push(first->incomingMessageQueue, toSend);
 }
 
@@ -245,7 +246,7 @@ void ROUTER_MANAGER_remove_edge(ROUTER_MANAGER *manager, char a, char b) {
     ROUTER_MESSAGE_QUEUE_push(first->incomingMessageQueue, toSend);
 }
 
-void ROUTER_MANAGER_print_distance_vec(ROUTER_MANAGER *manager, unsigned char name) {
+void ROUTER_MANAGER_print_distance_vec(ROUTER_MANAGER *manager, char name) {
     ROUTER_INFO *route = manager->allRouters[name];
     if (!route) return;
 
@@ -262,7 +263,7 @@ ROUTER_MANAGER *ROUTER_MANAGER_create() {
     return ptr;
 }
 
-void ROUTER_MANAGER_route_packet(ROUTER_MANAGER *manager, unsigned char a, unsigned char b, unsigned char message) {
+void ROUTER_MANAGER_route_packet(ROUTER_MANAGER *manager, char a, char b, char message) {
     ROUTER_INFO *rtr = getOrCreateRouter(manager, a);
     ROUTER_MESSAGE toSend;
     toSend.msgType = ROUTER_MESSAGE_PACKET;

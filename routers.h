@@ -1,10 +1,11 @@
 #pragma once
 #include <stdlib.h>
 #include <pthread.h>
+#include <stdint.h>
 #include "vec.h"
 #include "queue.h"
 
-#define MAX_NODES 256
+#define MAX_NODES 128
 
 extern pthread_mutex_t printMutex;
 
@@ -38,8 +39,8 @@ typedef union {
   } edgeAdditionMessage;
 
   struct {
-    unsigned char message;
-    unsigned char destination;
+    char message;
+    char destination;
   } packetMessage;
 } ROUTER_MESSAGE_CONTENTS;
 
@@ -83,6 +84,6 @@ typedef struct ROUTER_MANAGER {
 
 void ROUTER_MANAGER_add_edge(ROUTER_MANAGER *manager, char a, char b, double weight);
 void ROUTER_MANAGER_remove_edge(ROUTER_MANAGER *manager, char a, char b);
-void ROUTER_MANAGER_print_distance_vec(ROUTER_MANAGER *manager, unsigned char name);
-void ROUTER_MANAGER_route_packet(ROUTER_MANAGER *manager, unsigned char a, unsigned char b, unsigned char message);
+void ROUTER_MANAGER_print_distance_vec(ROUTER_MANAGER *manager, char name);
+void ROUTER_MANAGER_route_packet(ROUTER_MANAGER *manager, char a, char b, char message);
 ROUTER_MANAGER *ROUTER_MANAGER_create();

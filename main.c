@@ -74,7 +74,6 @@ void process_cmds(FILE *fp, NODE_INFO_VEC *nodes) {
   char input_cmds[4][256];
 
   while (fgets(input, sizeof(input), fp) != NULL) {
-    printf("%s\n", input);
     int i = 0, num_cmds = 1, k = 0;
     while (input[i] != '\n') {
       if (input[i] == ' ') {
@@ -241,6 +240,6 @@ void process_cmds(FILE *fp, NODE_INFO_VEC *nodes) {
         EDGE_VEC_append(node2_edges, new_edge);
       }
     }
-    usleep(200);
+    usleep(500);
   }
 }
