@@ -146,11 +146,15 @@ void *router(void *arg) {
         ROUTER_MESSAGE incomingMsg;
         ROUTER_MESSAGE_QUEUE_pop(myRouter->incomingMessageQueue, &incomingMsg);
 
+
         enum ROUTER_MESSAGE_TYPE msgType = incomingMsg.msgType;
         ROUTER_MESSAGE_CONTENTS content = incomingMsg.contents;
 
+        printf("%c %d\n", myRouter->name, msgType);
+
         switch (msgType) {
             case ROUTER_MESSAGE_EDGE_ADD: {
+                printf("other: %c\n", content.edgeAdditionMessage.other->name);
                 addOrUpdateEdge(myRouter, content.edgeAdditionMessage.other, content.edgeAdditionMessage.weight);
                 if (content.edgeAdditionMessage.repRequired == ROUTER_EDGE_ADD_REPLY_IN_KIND) {
                     ROUTER_MESSAGE toSend;
@@ -226,6 +230,7 @@ void ROUTER_MANAGER_add_edge(ROUTER_MANAGER *manager, char a, char b, double wei
     toSend.contents.edgeAdditionMessage.other = second;
     toSend.contents.edgeAdditionMessage.weight = weight;
     toSend.contents.edgeAdditionMessage.repRequired = ROUTER_EDGE_ADD_REPLY_IN_KIND;
+    printf("manager send add edge to %c (other %c, weight %f)\n", a, b, weight);
     ROUTER_MESSAGE_QUEUE_push(first->incomingMessageQueue, toSend);
 }
 

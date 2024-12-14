@@ -1,10 +1,11 @@
-#include "sharedtypes.h"
 #include "link_state.h"
+#include "sharedtypes.h"
 #include <errno.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 pthread_mutex_t printMutex;
 
@@ -73,6 +74,7 @@ void process_cmds(FILE *fp, NODE_INFO_VEC *nodes) {
   char input_cmds[4][256];
 
   while (fgets(input, sizeof(input), fp) != NULL) {
+    printf("%s\n", input);
     int i = 0, num_cmds = 1, k = 0;
     while (input[i] != '\n') {
       if (input[i] == ' ') {
@@ -121,17 +123,15 @@ void process_cmds(FILE *fp, NODE_INFO_VEC *nodes) {
     } else if (strcmp(input_cmds[0], "dv") == 0) {
       if (num_cmds > 1) {
         ROUTER_MANAGER_print_distance_vec(routers, input_cmds[1][0]);
+      } else {
+        for (int i = 0; i < MAX_NODES; i++) {
+          ROUTER_MANAGER_print_distance_vec(routers, i);
+        }
       }
-      else {
-      for (int i = 0; i < MAX_NODES; i++) {
-        ROUTER_MANAGER_print_distance_vec(routers, i);
-      }
-      }
-    }
-    else if (num_cmds > 1 && input_cmds[1][0] == '>') {
-      ROUTER_MANAGER_route_packet(routers, input_cmds[0][0], input_cmds[1][0], input_cmds[2][0]);
-    }
-     else {
+    } else if (num_cmds > 1 && input_cmds[1][0] == '>') {
+      ROUTER_MANAGER_route_packet(routers, input_cmds[0][0], input_cmds[1][0],
+                                  input_cmds[2][0]);
+    } else {
       if (num_cmds != 3) {
         fprintf(stderr,
                 "Expected 3 arguments (<node A> <node B> <cost>); got %d\n",
@@ -152,7 +152,6 @@ void process_cmds(FILE *fp, NODE_INFO_VEC *nodes) {
         if (node1_idx == -1 || node2_idx == -1)
           continue;
 
-          
         ROUTER_MANAGER_remove_edge(routers, node1, node2);
 
         EDGE_VEC *edges = nodes->data[node1_idx].edges;
@@ -242,5 +241,6 @@ void process_cmds(FILE *fp, NODE_INFO_VEC *nodes) {
         EDGE_VEC_append(node2_edges, new_edge);
       }
     }
+    usleep(200);
   }
 }
